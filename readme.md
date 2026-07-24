@@ -16,3 +16,11 @@
 3. **VM2/VM3 → VM4**: mỗi container webapp đọc biến `DB_HOST=192.168.39.15` (lấy động qua `hostvars[groups['dbservers'][0]].ansible_host`, không hardcode) để kết nối Postgres qua port 5432
 4. **Firewall trên VM4**: chỉ whitelist đúng 2 IP `192.168.39.71` và `192.168.39.54` được phép vào port 5432 — chặn mọi nguồn khác kể cả VM1
 5. **Control node**: kết nối SSH riêng biệt tới cả 4 VM để chạy Ansible playbook — đây là kênh quản trị, tách biệt hoàn toàn với luồng traffic ứng dụng thật (đường nét đứt trong sơ đồ)
+
+## Bước 1 : Cấu hình firewall 
+- Viểt playbook testfirewall 
+![alt text](img/p1.png)
+
+## Bước 2 : Cài đặt firewall trên các VM 
+- Viết file site.yml cập nhật thêm các role docker , firewall , 
+- Dùng tag docker để chạy mỗi docker 

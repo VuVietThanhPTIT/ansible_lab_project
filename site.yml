@@ -1,0 +1,7 @@
+---
+- name: Cấu hình firewall và cài Docker cho toàn bộ VM
+  hosts: all
+  become: true
+  roles:
+    - firewall
+    - docker

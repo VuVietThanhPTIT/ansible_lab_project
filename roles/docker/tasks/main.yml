@@ -1,0 +1,23 @@
+---
+- name: Cài Docker (bản có sẵn trong repo Ubuntu)
+  apt:
+    name:
+      - docker.io
+      - python3-docker
+    state: present
+    update_cache: true
+
+- name: Đảm bảo Docker service đang chạy
+  service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Verify Docker đã cài đúng
+  command: docker --version
+  register: docker_version
+  changed_when: false
+
+- name: In ra version Docker để verify
+  debug:
+    var: docker_version.stdout
