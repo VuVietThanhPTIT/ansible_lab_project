@@ -20,7 +20,7 @@
 - name: Chạy container web app
   community.docker.docker_container:
     name: webapp
-    image: myorg/webapp:latest
+    image: ghost:latest
     state: started
     restart_policy: always
     env_file: /opt/webapp/app.env
