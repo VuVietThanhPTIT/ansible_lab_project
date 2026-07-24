@@ -37,3 +37,5 @@
 - name: In kết quả health check qua LB
   debug:
     msg: "{{ 'LB → Web → DB hoạt động OK' if lb_health is success else 'LB CHƯA route được tới backend — kiểm tra lại upstream/firewall' }}"
+
+    

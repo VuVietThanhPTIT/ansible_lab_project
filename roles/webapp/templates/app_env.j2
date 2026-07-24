@@ -4,3 +4,4 @@ DB_USER=admin
 DB_PASSWORD={{ db_password }}
 DB_NAME=appdb
 APP_PORT={{ app_port }}
+DATABASE_URL=postgresql://admin:{{ db_password }}@{{ hostvars[groups['dbservers'][0]].ansible_host }}:{{ hostvars[groups['dbservers'][0]].db_port }}/appdb
