@@ -7,3 +7,10 @@
       tags: firewall
     - role: docker
       tags: docker
+
+- name: Deploy database
+  hosts: dbservers
+  become: true
+  roles:
+    - role: database
+      tags: database

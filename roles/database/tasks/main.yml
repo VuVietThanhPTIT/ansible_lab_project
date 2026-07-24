@@ -1,0 +1,46 @@
+---
+- name: Tạo thư mục chứa config database trên vm 
+  file:
+    path: /opt/database
+    state: directory
+    mode: "0755"
+
+- name: Render file env cho database từ template
+  template:
+    src: db_env.j2
+    dest: /opt/database/db.env
+    mode: "0600"
+
+- name: Pull Postgres image
+  community.docker.docker_image:
+    name: postgres
+    tag: "15"
+    source: pull
+
+- name: Chạy container database
+  community.docker.docker_container:
+    name: app_db
+    image: postgres:15
+    state: started
+    restart_policy: always
+    env_file: /opt/database/db.env
+    ports:
+      - "{{ db_port }}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+- name: Đợi Postgres sẵn sàng nhận kết nối
+  wait_for:
+    port: "{{ db_port }}"
+    host: "0.0.0.0"
+    delay: 3
+    timeout: 30
+
+- name: Verify container đang chạy
+  command: docker ps --filter "name=app_db" --format "{{ '{{.Names}} {{.Status}}' }}"
+  register: db_container_status
+  changed_when: false
+
+- name: In ra trạng thái container để verify
+  debug:
+    var: db_container_status.stdout

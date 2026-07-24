@@ -25,5 +25,19 @@
 - Viết file site.yml cập nhật thêm các role docker , firewall , 
 - Dùng tag docker để chạy mỗi docker 
 ```
+roles/docker/
+└── tasks/
+    └── main.yml
+```
+```
 ansible-playbook site.yml --tags docker
+```
+## Bước 3 : Cấu hình database 
+Cấu trúc thư mục database trong ansible 
+```
+roles/database/
+├── tasks/
+│   └── main.yml
+└── templates/
+    └── db_env.j2
 ```
