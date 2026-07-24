@@ -22,9 +22,9 @@
   register: nginx_test
   changed_when: false
 
-- name: In kết quả kiểm tra syntax
-  debug:
-    var: nginx_test.stderr_lines
+# 🛠️ THÊM TASK NÀY VÀO ĐÂY:
+- name: Ép Ansible chạy ngay các Handler đang chờ
+  meta: flush_handlers
 
 - name: Test thử LB có route được tới backend không
   uri:

@@ -43,7 +43,7 @@ roles/database/
 ```
 - Chạy test database 
 ## Bước 4 : Cấu hình webapp theo 
-- Sử dụng images horlar/flask-restapi-crud-app để test thử nginx lb  , 
+- Sử dụng images horlar/flask-restapi-crud-app để test thử crud  
 ```
 roles/webapp/
 ├── tasks/
@@ -52,4 +52,12 @@ roles/webapp/
     └── app_env.j2
 ```
 ## Bước 5 : Cấu hình nginx 
-
+```
+roles/loadbalancer/
+├── tasks/
+│   └── main.yml
+├── templates/
+│   └── nginx.conf.j2
+└── handlers/
+    └── main.yml
+```
