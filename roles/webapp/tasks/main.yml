@@ -13,14 +13,14 @@
 
 - name: Pull web app image
   community.docker.docker_image:
-    name: ghost  
+    name: horlar/flask-restapi-crud-app
     tag: latest
     source: pull
 
 - name: Chạy container web app
   community.docker.docker_container:
     name: webapp
-    image: ghost:latest
+    image: horlar/flask-restapi-crud-app:latest
     state: started
     restart_policy: always
     env_file: /opt/webapp/app.env
