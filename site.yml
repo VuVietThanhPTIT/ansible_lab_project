@@ -3,5 +3,7 @@
   hosts: all
   become: true
   roles:
-    - firewall
-    - docker
+    - role: firewall
+      tags: firewall
+    - role: docker
+      tags: docker

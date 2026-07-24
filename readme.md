@@ -24,3 +24,6 @@
 ## Bước 2 : Cài đặt firewall trên các VM 
 - Viết file site.yml cập nhật thêm các role docker , firewall , 
 - Dùng tag docker để chạy mỗi docker 
+```
+ansible-playbook site.yml --tags docker
+```
