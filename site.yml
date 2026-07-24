@@ -14,3 +14,10 @@
   roles:
     - role: database
       tags: database
+
+- name: Deploy web app
+  hosts: webservers
+  become: true
+  roles:
+    - role: webapp
+      tags: webapp

@@ -1,0 +1,56 @@
+---
+- name: Tạo thư mục chứa config webapp
+  file:
+    path: /opt/webapp
+    state: directory
+    mode: "0755"
+
+- name: Render file env cho web app từ template
+  template:
+    src: app_env.j2
+    dest: /opt/webapp/app.env
+    mode: "0600"
+
+- name: Pull web app image
+  community.docker.docker_image:
+    name: myorg/webapp
+    tag: latest
+    source: pull
+
+- name: Chạy container web app
+  community.docker.docker_container:
+    name: webapp
+    image: myorg/webapp:latest
+    state: started
+    restart_policy: always
+    env_file: /opt/webapp/app.env
+    ports:
+      - "{{ app_port }}:5000"
+
+- name: Đợi webapp sẵn sàng nhận kết nối
+  wait_for:
+    port: "{{ app_port }}"
+    host: "0.0.0.0"
+    delay: 3
+    timeout: 30
+
+- name: Verify container đang chạy
+  command: docker ps --filter "name=webapp" --format "{{ '{{.Names}} {{.Status}}' }}"
+  register: webapp_container_status
+  changed_when: false
+
+- name: In ra trạng thái container để verify
+  debug:
+    var: webapp_container_status.stdout
+
+- name: Test thử app có phản hồi không (curl nội bộ)
+  uri:
+    url: "http://localhost:{{ app_port }}"
+    status_code: 200
+    timeout: 5
+  register: app_health
+  ignore_errors: true
+
+- name: In kết quả health check
+  debug:
+    msg: "App phản hồi OK" if app_health is success else "App CHƯA phản hồi được — kiểm tra lại image/code"

@@ -41,3 +41,13 @@ roles/database/
 └── templates/
     └── db_env.j2
 ```
+- Chạy test database 
+## Bước 4 : Cấu hình webapp theo kiểu IP động ( không cân biết địa chỉ IP )
+- Sử dụng images nginxdemos/hello để test thử nginx lb 
+```
+roles/webapp/
+├── tasks/
+│   └── main.yml
+└── templates/
+    └── app_env.j2
+```
