@@ -13,7 +13,7 @@
 
 - name: Pull web app image
   community.docker.docker_image:
-    name: myorg/webapp
+    name: ghost  
     tag: latest
     source: pull
 
@@ -53,4 +53,4 @@
 
 - name: In kết quả health check
   debug:
-    msg: "app ok" if app_health is success else "Kiem tra lai code"
+    msg: "{{ 'app ok' if app_health is success else 'Kiem tra lai code' }}" 
