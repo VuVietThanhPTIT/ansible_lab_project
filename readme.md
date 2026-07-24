@@ -33,7 +33,7 @@ roles/docker/
 ansible-playbook site.yml --tags docker
 ```
 ## Bước 3 : Cấu hình database 
-Cấu trúc thư mục database trong ansible 
+- Cấu trúc thư mục database trong ansible 
 ```
 roles/database/
 ├── tasks/
@@ -42,8 +42,8 @@ roles/database/
     └── db_env.j2
 ```
 - Chạy test database 
-## Bước 4 : Cấu hình webapp theo kiểu IP động ( không cân biết địa chỉ IP )
-- Sử dụng images nginxdemos/hello để test thử nginx lb 
+## Bước 4 : Cấu hình webapp theo 
+- Sử dụng images horlar/flask-restapi-crud-app để test thử nginx lb  , 
 ```
 roles/webapp/
 ├── tasks/
@@ -51,3 +51,5 @@ roles/webapp/
 └── templates/
     └── app_env.j2
 ```
+## Bước 5 : Cấu hình nginx 
+

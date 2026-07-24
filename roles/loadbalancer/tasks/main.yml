@@ -1,0 +1,39 @@
+---
+- name: Cài nginx
+  apt:
+    name: nginx
+    state: present
+    update_cache: true
+
+- name: Render cấu hình upstream động
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/sites-available/default
+  notify: Restart nginx
+
+- name: Đảm bảo nginx đang chạy và tự khởi động cùng hệ thống
+  service:
+    name: nginx
+    state: started
+    enabled: true
+
+- name: Verify cấu hình nginx không lỗi syntax
+  command: nginx -t
+  register: nginx_test
+  changed_when: false
+
+- name: In kết quả kiểm tra syntax
+  debug:
+    var: nginx_test.stderr_lines
+
+- name: Test thử LB có route được tới backend không
+  uri:
+    url: "http://localhost/books"
+    status_code: 200
+    timeout: 5
+  register: lb_health
+  ignore_errors: true
+
+- name: In kết quả health check qua LB
+  debug:
+    msg: "{{ 'LB → Web → DB hoạt động OK' if lb_health is success else 'LB CHƯA route được tới backend — kiểm tra lại upstream/firewall' }}"

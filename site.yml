@@ -21,3 +21,10 @@
   roles:
     - role: webapp
       tags: webapp
+
+- name: Deploy load balancer
+  hosts: loadbalancer
+  become: true
+  roles:
+    - role: loadbalancer
+      tags: loadbalancer
