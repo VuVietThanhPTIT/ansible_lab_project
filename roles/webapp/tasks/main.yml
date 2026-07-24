@@ -53,4 +53,4 @@
 
 - name: In kết quả health check
   debug:
-    msg: "App phản hồi OK" if app_health is success else "App CHƯA phản hồi được — kiểm tra lại image/code"
+    msg: "App phản hồi OK" if app_health is success else "Kiem tra lai code"
