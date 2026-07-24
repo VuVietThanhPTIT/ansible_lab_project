@@ -1,0 +1,42 @@
+---
+- name: Cài đặt UFW
+  apt:
+    name: ufw
+    state: present
+    update_cache: true
+
+- name: Cho phép SSH (port 22) trên mọi VM
+  ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+
+- name: Mở port HTTP (80) — chỉ trên loadbalancer
+  ufw:
+    rule: allow
+    port: "80"
+    proto: tcp
+  when: inventory_hostname in groups['loadbalancer']
+
+- name: Mở port app (5000) — chỉ trên webservers, chỉ cho phép từ loadbalancer
+  ufw:
+    rule: allow
+    from_ip: "{{ hostvars[item].ansible_host }}"
+    port: "{{ app_port }}"
+    proto: tcp
+  loop: "{{ groups['loadbalancer'] }}"
+  when: inventory_hostname in groups['webservers']
+
+- name: Mở port database (5432) — chỉ trên dbservers, chỉ whitelist từng webserver
+  ufw:
+    rule: allow
+    from_ip: "{{ hostvars[item].ansible_host }}"
+    port: "{{ db_port }}"
+    proto: tcp
+  loop: "{{ groups['webservers'] }}"
+  when: inventory_hostname in groups['dbservers']
+
+- name: Bật UFW
+  ufw:
+    state: enabled
+    policy: deny
