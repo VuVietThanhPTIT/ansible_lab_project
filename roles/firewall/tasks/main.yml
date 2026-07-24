@@ -40,3 +40,16 @@
   ufw:
     state: enabled
     policy: deny
+
+# ============================
+# VERIFY 
+# ============================
+
+- name: Lấy trạng thái UFW để kiểm tra
+  command: ufw status
+  register: ufw_status
+  changed_when: false
+
+- name: In ra UFW status để verify
+  debug:
+    var: ufw_status.stdout_lines
