@@ -13,14 +13,14 @@
 
 - name: Pull Postgres image
   community.docker.docker_image:
-    name: postgres
-    tag: "15"
+    name: "{{ db_image }}"
+    tag: "{{ db_image_tag }}"
     source: pull
 
 - name: Chạy container database
   community.docker.docker_container:
     name: app_db
-    image: postgres:15
+    image: "{{ db_image }}:{{ db_image_tag }}"
     state: started
     restart_policy: always
     env_file: /opt/database/db.env

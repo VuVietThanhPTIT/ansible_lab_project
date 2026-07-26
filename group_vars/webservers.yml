@@ -1,1 +1,3 @@
 app_port: 5000
+webapp_image: horlar/flask-restapi-crud-app
+webapp_image_tag: latest
