@@ -134,3 +134,76 @@ tcpdump: listening on any, link-type LINUX_SLL2 (Linux cooked v2), snapshot leng
     192.168.39.82.49284 > 192.168.39.73.80: Flags [.], cksum 0xd012 (incorrect -> 0x47fb), ack 292, win 501, options [nop,nop,TS val 315685512 ecr 1934081825], length 0
 
 ```
+
+```mermaid
+flowchart TD
+    Start(["ansible-playbook site.yml --tags database"]) --> Cfg["Đọc ansible.cfg<br/>(inventory path, forks, remote_user...)"]
+    Cfg --> Inv["Parse Inventory<br/>hosts.yml → dựng cây group/host<br/>all → webservers/dbservers/loadbalancer"]
+    Inv --> Vars["Nạp group_vars/, host_vars/<br/>Gộp biến theo precedence cho từng host"]
+    Vars --> Parse["Parse site.yml<br/>Từng Play: hosts, roles, tags<br/>import_tasks/import_role ráp nối NGAY (static)"]
+    Parse --> Filter["Lọc theo --tags database<br/>Bỏ Play/task không khớp tag"]
+
+    Filter --> PlayLoop{"Còn Play nào<br/>chưa chạy?"}
+    PlayLoop -->|Có| Strategy["Strategy Plugin (linear/free)<br/>điều phối host nào chạy gì, khi nào"]
+    Strategy --> TQM["Task Queue Manager<br/>Sinh worker process theo forks"]
+    TQM --> Facts["Gather Facts (module setup)<br/>Thu thập ansible_distribution, ansible_architecture..."]
+
+    Facts --> TaskLoop{"Còn Task nào<br/>chưa chạy trong Play?"}
+    TaskLoop -->|Có| TE["TaskExecutor nhận task<br/>vd: template src=db_env.j2 dest=/opt/database/db.env"]
+
+    TE --> ActionCheck{"Module hay<br/>Action Plugin đặc biệt?"}
+
+    ActionCheck -->|"template/debug/assert..."| SpecialAction["Action Plugin đặc biệt<br/>CHẠY NGAY TRÊN CONTROL NODE"]
+    SpecialAction --> Jinja["Jinja2 Engine render file .j2<br/>Đọc context biến của host hiện tại<br/>Thay {{ }} {% %} → giá trị thật"]
+    Jinja --> TempFile["Sinh file kết quả tạm<br/>(text thuần, hết Jinja2)"]
+    TempFile --> CallCopy["Gọi tiếp module copy<br/>để đẩy file tạm này đi"]
+    CallCopy --> NormalAction
+
+    ActionCheck -->|"module thường<br/>(docker_image, apt, ufw...)"| NormalAction["normal Action Plugin<br/>Nhạc trưởng chính"]
+
+    NormalAction --> Conn["Connection Plugin (SSH)<br/>Mở/tái sử dụng kết nối (ControlPersist)<br/>TCP handshake → SSH handshake"]
+    Conn --> Pack["module_common.py đóng gói module<br/>Nhận diện loại module<br/>Python → framework Ansiballz<br/>Zip + Base64 + wrapper script"]
+    Pack --> Push["Đẩy module đã đóng gói sang Managed Node<br/>Pipelining: pipe qua stdin<br/>Không pipelining: ghi file tạm + exec riêng"]
+
+    Push -.->|SSH| RemoteExec
+
+    subgraph Remote["MANAGED NODE — thực thi thật"]
+        RemoteExec["Wrapper giải mã zip<br/>Set PYTHONPATH, import module như __main__"]
+        RemoteExec --> ModRun["Module thực thi<br/>vd: ghi file /opt/database/db.env<br/>So sánh checksum → idempotency check"]
+        ModRun --> JSON["Sinh JSON kết quả<br/>{changed, failed, msg, rc...}"]
+    end
+
+    JSON -.->|SSH gửi ngược| Parse2
+
+    Parse2["normal Action Plugin nhận JSON<br/>Parse thành dict Python<br/>Đánh dấu mọi string là Unsafe"]
+    Parse2 --> Directive["TaskExecutor xử lý directive<br/>register → lưu biến<br/>changed_when/failed_when → override kết quả<br/>notify → đánh dấu handler sẽ chạy cuối Play"]
+    Directive --> Callback["Callback Plugin in kết quả<br/>ra terminal: TASK [...] *** changed: [db1]"]
+
+    Callback --> TaskLoop
+    TaskLoop -->|Hết task| Handlers{"Có handler<br/>được notify?"}
+    Handlers -->|Có| RunHandler["Chạy Handler<br/>(đi lại đúng luồng Task ở trên)"]
+    RunHandler --> PlayLoop
+    Handlers -->|Không| PlayLoop
+
+    PlayLoop -->|Hết Play| Recap["PLAY RECAP<br/>ok= changed= failed=<br/>Trả exit code"]
+    Recap --> End(["Kết thúc"])
+
+    style Start fill:#fff3e0
+    style End fill:#c8e6c9
+    style Remote fill:#ffe0b2
+    style SpecialAction fill:#bbdefb
+    style Jinja fill:#bbdefb
+    style NormalAction fill:#d1c4e9
+    style Conn fill:#d1c4e9
+    style ModRun fill:#ffccbc
+```
+
+---
+
+## Chú thích đọc sơ đồ
+
+- **Vùng màu cam (Remote/Managed Node)**: đây là phần DUY NHẤT thực sự chạy trên VM đích (db1/web1/web2/lb1) — mọi thứ còn lại chạy trên control node.
+- **Vùng màu xanh dương (Action Plugin đặc biệt)**: chỉ áp dụng cho `template`, `debug`, `assert`... — các plugin này KHÔNG kết nối SSH, xử lý xong ngay tại chỗ.
+- **Vùng màu tím (normal Action Plugin + Connection)**: mọi module thường (kể cả module được `template` gọi ngầm) đều đi qua đường này để tới được managed node.
+- **Vòng lặp `TaskLoop`**: lặp lại cho từng task trong 1 role, đúng thứ tự viết trong file `tasks/main.yml`.
+- **Vòng lặp `PlayLoop`**: lặp lại cho từng Play trong `site.yml` (Play cho `dbservers`, rồi Play cho `webservers`...).
